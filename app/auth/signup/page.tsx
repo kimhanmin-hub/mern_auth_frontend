@@ -57,7 +57,7 @@ const Signup = () => {
                 await router.push('/auth/verify');
                 console.log('라우팅 완료');
             }
-        } catch (error: ApiError) {
+        } catch (error: any) {
             console.error('회원가입 에러:', error);
             toast.error(error.response?.data?.message || '회원가입 중 오류가 발생했습니다.');
         } finally {
