@@ -39,22 +39,28 @@ const Signup = () => {
         setLoading(true);
 
         try {
-            console.log('Request URL:', `${API_URL}/users/signup`);
-            console.log('Request Data:', formData);
-            
-            const response = await axios.post(`${API_URL}/users/signup`, formData,
-                {
-                    withCredentials: true,
-                });
+            console.log('회원가입 시도...');
+            const response = await axios.post(`${API_URL}/users/signup`, formData, {
+                withCredentials: true,
+            });
 
+            console.log('회원가입 응답:', response.data);
             const user = response.data.data.user;
-            toast.success('회원가입이 완료되었습니다.');
-            dispatch(setAuthUser(user));
-            router.push('/auth/verify');
-        } catch (error:any) {
-            toast.error(error.response.data.message);
-            console.log(error);
-        }finally{
+            
+            if (user) {
+                console.log('사용자 데이터:', user);
+                toast.success('회원가입이 완료되었습니다.');
+                dispatch(setAuthUser(user));
+                
+                // 라우팅 전에 상태 확인
+                console.log('verify 페이지로 이동 시도...');
+                await router.push('/auth/verify');
+                console.log('라우팅 완료');
+            }
+        } catch (error: ApiError) {
+            console.error('회원가입 에러:', error);
+            toast.error(error.response?.data?.message || '회원가입 중 오류가 발생했습니다.');
+        } finally {
             setLoading(false);
         }
     };
