@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 
 const Verify = () => {
   const [otp, setOtp] = useState<string[]>(["", "", "", ""]);
-  const inputRefs = useRef<HTMLInputElement | null[]>([]);
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
@@ -97,7 +97,9 @@ const Verify = () => {
               maxLength={1}
               value={otp[index]}
               onChange={(e) => handleChange(index, e)}
-              ref={(el) => (inputRefs.current[index] = el)}
+              ref={(el: HTMLInputElement | null) => {
+                inputRefs.current[index] = el;
+              }}
               onKeyDown={(e) => handleKeyDown(index, e)}
               className='w-20 h-20 rounded-lg bg-gray-200 text-3xl font-bold text-center no-spinner'
 
