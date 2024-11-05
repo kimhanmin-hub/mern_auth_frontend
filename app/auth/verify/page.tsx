@@ -1,4 +1,3 @@
-//이메일 인증 코드 입력 페이지
 'use client'
 import { Button } from '@/components/ui/button';
 import { API_URL } from '@/server';
@@ -21,7 +20,10 @@ const Verify = () => {
   const user = useSelector((state: RootState) => state.auth.User);
 
   useEffect(() => {
-    if (!user) router.push('/auth/login');
+    if (!user) {
+      toast.error('로그인이 필요합니다.');
+      router.push('/auth/login');
+    }
   }, [user, router]);
 
   const handleChange = (
@@ -29,12 +31,13 @@ const Verify = () => {
     event: ChangeEvent<HTMLInputElement>
   ): void => {
     const { value } = event.target;
+    const newValue = value.slice(-1); // 마지막 숫자만 사용
     const newOtp = [...otp];
-    newOtp[index] = value;
+    newOtp[index - 1] = newValue; // index-1로 수정
     setOtp(newOtp);
 
-    if (value.length === 1 && inputRefs.current[index + 1]) {
-      inputRefs.current[index + 1]?.focus();
+    if (newValue && index < 4) {
+      inputRefs.current[index]?.focus();
     }
   };
 
@@ -44,19 +47,23 @@ const Verify = () => {
   ): void => {
     if (
       event.key === "Backspace" &&
-      !inputRefs.current[index]?.value &&
-      inputRefs.current[index - 1]
+      !otp[index - 1] &&
+      index > 1
     ) {
-      inputRefs.current[index - 1]?.focus();
+      inputRefs.current[index - 2]?.focus();
     }
   };
 
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      console.log('OTP 제출 시도...');
       const optValue = otp.join('');
-      const token = document.cookie.split('token=')[1]?.split(';')[0];
+      console.log('제출할 OTP:', optValue);
       
+      const token = document.cookie.split('token=')[1]?.split(';')[0];
+      console.log('토큰:', token);
+
       const response = await axios.post(
         `${API_URL}/users/verify`,
         { otp: optValue },
@@ -67,12 +74,15 @@ const Verify = () => {
           }
         }
       );
+      
+      console.log('서버 응답:', response.data);
       const verifiedUser = response.data.data.user;
       dispatch(setAuthUser(verifiedUser));
       toast.success("이메일 인증이 완료되었습니다.");
       router.push('/');
     } catch (error: any) {
-      console.error('Verification error:', error);
+      console.error('인증 에러:', error);
+      console.error('에러 상세:', error.response?.data);
       toast.error(error.response?.data?.message || '인증에 실패했습니다.');
     } finally {
       setLoading(false);
@@ -82,7 +92,9 @@ const Verify = () => {
   const handleResendOtp = async () => {
     setLoading(true);
     try {
+      console.log('OTP 재전송 시도...');
       const token = document.cookie.split('token=')[1]?.split(';')[0];
+      console.log('토큰:', token);
       
       await axios.post(
         `${API_URL}/users/resend-otp`,
@@ -96,7 +108,8 @@ const Verify = () => {
       );
       toast.success("인증번호가 재전송되었습니다.");
     } catch (error: any) {
-      console.error('Resend OTP error:', error);
+      console.error('재전송 에러:', error);
+      console.error('에러 상세:', error.response?.data);
       toast.error(error.response?.data?.message || '인증번호 재전송에 실패했습니다.');
     } finally {
       setLoading(false);
@@ -107,32 +120,33 @@ const Verify = () => {
     <div className='h-screen flex flex-col items-center justify-center'>
       <h1 className='text-2xl mb-4 font-semibold'>이메일 인증 코드를 입력해주세요.</h1>
       <div className='flex space-x-4'>
-        {[1, 2, 3, 4].map((index) => {
-          return (
-            <input
-              type='number'
-              key={index}
-              maxLength={1}
-              value={otp[index]}
-              onChange={(e) => handleChange(index, e)}
-              ref={(el: HTMLInputElement | null) => {
-                inputRefs.current[index] = el;
-              }}
-              onKeyDown={(e) => handleKeyDown(index, e)}
-              className='w-20 h-20 rounded-lg bg-gray-200 text-3xl font-bold text-center no-spinner'
-
-            />
-          )
-        })}
+        {[1, 2, 3, 4].map((index) => (
+          <input
+            key={index}
+            type='number'
+            maxLength={1}
+            value={otp[index - 1] || ''}
+            onChange={(e) => handleChange(index, e)}
+            ref={(el) => {
+              inputRefs.current[index - 1] = el;
+            }}
+            onKeyDown={(e) => handleKeyDown(index, e)}
+            className='w-20 h-20 rounded-lg bg-gray-200 text-3xl font-bold text-center no-spinner'
+          />
+        ))}
       </div>
 
-      {!loading && <div className='flex items-center space-x-4 mt-6'>
-        <Button onClick={handleSubmit} variant={"default"}>제출하기</Button>
-        <Button onClick={handleResendOtp} className='bg-orange-600'>인증번호 재전송</Button>
-      </div>}
-      {loading && <Button className='mt-6'>
-        <Loader className='animate-spin' />
-      </Button>}
+      {!loading && (
+        <div className='flex items-center space-x-4 mt-6'>
+          <Button onClick={handleSubmit} variant={"default"}>제출하기</Button>
+          <Button onClick={handleResendOtp} className='bg-orange-600'>인증번호 재전송</Button>
+        </div>
+      )}
+      {loading && (
+        <Button className='mt-6'>
+          <Loader className='animate-spin' />
+        </Button>
+      )}
     </div>
   )
 }
