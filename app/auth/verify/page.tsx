@@ -60,7 +60,7 @@ const Verify = () => {
         { otp: optValue },
         { withCredentials: true }
       );
-      const verifiedUser = response.data.user;
+      const verifiedUser = response.data.data.user;
       dispatch(setAuthUser(verifiedUser));
       toast.success("이메일 인증이 완료되었습니다.");
       router.push('/');
