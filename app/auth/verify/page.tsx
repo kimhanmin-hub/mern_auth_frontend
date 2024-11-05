@@ -55,17 +55,25 @@ const Verify = () => {
     setLoading(true);
     try {
       const optValue = otp.join('');
+      const token = document.cookie.split('token=')[1]?.split(';')[0];
+      
       const response = await axios.post(
         `${API_URL}/users/verify`,
         { otp: optValue },
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
       );
       const verifiedUser = response.data.data.user;
       dispatch(setAuthUser(verifiedUser));
       toast.success("이메일 인증이 완료되었습니다.");
       router.push('/');
     } catch (error: any) {
-      toast.error(error.response.data.message);
+      console.error('Verification error:', error);
+      toast.error(error.response?.data?.message || '인증에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -74,12 +82,22 @@ const Verify = () => {
   const handleResendOtp = async () => {
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/users/resend-otp`, null,
-        { withCredentials: true }
+      const token = document.cookie.split('token=')[1]?.split(';')[0];
+      
+      await axios.post(
+        `${API_URL}/users/resend-otp`,
+        null,
+        { 
+          withCredentials: true,
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
       );
       toast.success("인증번호가 재전송되었습니다.");
     } catch (error: any) {
-      toast.error(error.response.data.message);
+      console.error('Resend OTP error:', error);
+      toast.error(error.response?.data?.message || '인증번호 재전송에 실패했습니다.');
     } finally {
       setLoading(false);
     }
