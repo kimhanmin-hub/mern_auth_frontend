@@ -39,7 +39,8 @@ const Signup = () => {
         setLoading(true);
 
         try {
-            console.log('회원가입 시도...');
+            console.log('실제 요청 URL:', `${API_URL}/users/signup`);
+            console.log('요청 데이터:', formData);
             const response = await axios.post(`${API_URL}/users/signup`, formData, {
                 withCredentials: true,
             });
